@@ -1,0 +1,17 @@
+{
+  "name": "weather-tts",
+  "version": "1.0.0",
+  "description": "A audio file generator for the weather.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "degrees-to-direction": "^1.1.1",
+    "google-tts-api": "^2.0.2",
+    "luxon": "^1.27.0"
+  }
+}
