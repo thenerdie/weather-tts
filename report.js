@@ -1,6 +1,5 @@
 const weather = require('./weather');
 const getDirection = require('degrees-to-direction')
-const fs = require('fs')
 const { DateTime, Duration } = require('luxon')
 
 module.exports = class Report {
@@ -47,7 +46,7 @@ module.exports = class Report {
     }
 
     getHourlyWeather({ hourly }) {
-        let report = [""]
+        let report = [""] 
 
         report.push("Here is the five hour weather forecast for the vicinity.")
 
@@ -74,17 +73,16 @@ module.exports = class Report {
     getDailyWeather({ daily }) {
         let report = []
 
-        report.push("Here is the daily forecast for the vicinity.")
+        report.push("Here is the five day forecast for the vicinity.")
 
-        daily.forEach(day => {
+        daily.slice(0, 4).forEach(day => {
             const time = DateTime.fromSeconds(day.dt)
 
             report.push(`${time.weekdayLong}.`)
-            report.push(`Morning temperature of ${day.temp.morn} degrees.`)
             report.push(`High of ${day.temp.max.toFixed(0)} degrees. It will feel like ${day.feels_like.day.toFixed(0)} degrees.`)
+            report.push(`Relative humidity ${day.humidity} percent.`)
             report.push(`Evening temperature of ${day.temp.eve.toFixed(0)} degrees.`)
             report.push(`Conditions will be ${day.weather[0].description}, with a ${day.rain?.toFixed(0) || 0} percent chance of rain, and a UV index of ${day.uvi.toFixed(1)}.`)
-            report.push(`Relative humidity ${day.humidity} percent.`)
 
             report.push(`${time.weekdayLong} night.`)
 
@@ -127,10 +125,11 @@ module.exports = class Report {
         const daily = this.getDailyWeather(data)
         const alerts = this.getAlerts(data)
 
-        const preface = `You are listening to station ${stationName}. This is a station broadcasting weather information on a loop.
-            This station is not affiliated with NOAA weather radio, a governmental broadcast featuring similar products. Thank you for listening to ${stationName}.`
+        const currentTime = DateTime.now()
 
-        fs.writeFileSync("weatherReport.txt", current.concat(hourly).concat(daily))
+        const preface = `You are listening to station ${stationName}. This is a station broadcasting weather information on a loop.
+            This station is not affiliated with NOAA weather radio, a governmental broadcast featuring similar products. Thank you for listening to ${stationName}.
+            The current time is ${currentTime.toLocaleString(DateTime.TIME_SIMPLE)} ${currentTime.offsetNameLong}.`
 
         return preface.concat(current).concat(hourly).concat(daily).concat(alerts)
     }

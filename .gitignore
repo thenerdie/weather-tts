@@ -118,5 +118,6 @@ dist
 .pnp.*
 
 key.json
+config.json
 *.wav
 weatherReport.txt
