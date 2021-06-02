@@ -20,6 +20,20 @@ async function doReport() {
                 doReport()
             })
         })
+    }).catch(() => {
+        console.log(chalk.red("Could not get report data!"))
+
+        const report = `Weather information is not available at this time.`
+
+        exportTTSWav(report).then(fileName => {
+            console.log(chalk.green("Audio data written to wav file! Playing..."))
+
+            const player = new ffplay(`./${fileName}`)
+
+            player.proc.on('exit', () => {
+                doReport()
+            })
+        })
     })
 }
 
