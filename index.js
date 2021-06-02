@@ -1,13 +1,9 @@
-const fs = require('fs');
-const path = require('path');
-const playSound = require('play-sound');
+const ffplay = require('ffplay')
 const chalk = require('chalk');
 const exportTTSWav = require('./exportTTSWav')
 const Report = require('./report');
 
 const args = process.argv.slice(2)
-
-const audioPlayer = playSound()
 
 const weatherReport = new Report()
 
@@ -18,9 +14,9 @@ async function doReport() {
         exportTTSWav(report).then(fileName => {
             console.log(chalk.green("Audio data written to wav file! Playing..."))
 
-            var process = audioPlayer.play(`./${fileName}`)
+            const player = new ffplay(`./${fileName}`)
 
-            process.on('exit', () => {
+            player.proc.on('exit', () => {
                 doReport()
             })
         })

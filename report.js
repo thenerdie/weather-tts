@@ -82,7 +82,7 @@ module.exports = class Report {
             report.push(`High of ${day.temp.max.toFixed(0)} degrees. It will feel like ${day.feels_like.day.toFixed(0)} degrees.`)
             report.push(`Relative humidity ${day.humidity} percent.`)
             report.push(`Evening temperature of ${day.temp.eve.toFixed(0)} degrees.`)
-            report.push(`Conditions will be ${day.weather[0].description}, with a ${day.rain?.toFixed(0) || 0} percent chance of rain, and a UV index of ${day.uvi.toFixed(1)}.`)
+            report.push(`Conditions will be ${day.weather[0].description}, with a ${(day.pop * 100).toFixed(0) || 0} percent chance of rain, and a UV index of ${day.uvi.toFixed(1)}.`)
 
             report.push(`${time.weekdayLong} night.`)
 
