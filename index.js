@@ -19,6 +19,9 @@ async function doReport() {
             player.proc.on('exit', () => {
                 doReport()
             })
+        }).catch(err => {
+            console.log(chalk.red(err));
+            doReport()
         })
     }).catch(() => {
         console.log(chalk.red("Could not get report data!"))
