@@ -77,7 +77,7 @@ module.exports = class Report {
     }
 
     getMinutelyWeather({ minutely }) {
-        let report = []
+        let report = [""]
 
         report.push("This is the forecast for the next 10 minutes for the vicinity.")
 
@@ -92,7 +92,7 @@ module.exports = class Report {
     }
 
     getDailyWeather({ daily }) {
-        let report = []
+        let report = [""]
 
         report.push("Here is the five day forecast for the vicinity.")
 
@@ -188,6 +188,8 @@ module.exports = class Report {
         const preface = `You are listening to station ${stationName}, serving the ${this.city} area. This is a station broadcasting weather information on a loop.
             This station is not affiliated with NOAA weather radio, a governmental broadcast featuring similar products. Thank you for listening to ${stationName}.
             The current time is ${currentTime.toLocaleString(DateTime.TIME_SIMPLE)} ${currentTime.offsetNameLong}.`
+
+        console.log(preface.concat(current).concat(hourly).concat(minutely).concat(daily).concat(alerts).concat(notes))
 
         return preface.concat(current).concat(hourly).concat(minutely).concat(daily).concat(alerts).concat(notes)
     }
