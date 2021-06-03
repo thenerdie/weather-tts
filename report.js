@@ -1,8 +1,14 @@
+const axios = require('axios');
 const weather = require('./weather');
-const getDirection = require('degrees-to-direction')
-const { DateTime, Duration } = require('luxon')
+const getDirection = require('degrees-to-direction');
+const { DateTime, Duration } = require('luxon');
+
+const config = require('./config')
+const key = require('./key')
 
 module.exports = class Report {
+    city = "unknown"
+
     getWindDirectionString(dir) {
         const abbreviationToWindDirectionMap = {
             "W": "west",
@@ -70,6 +76,21 @@ module.exports = class Report {
         return report.join(" ")
     }
 
+    getMinutelyWeather({ minutely }) {
+        let report = []
+
+        report.push("This is the forecast for the next 10 minutes for the vicinity.")
+
+        minutely.slice(0, 9).forEach(minute => {
+            let time = DateTime.fromSeconds(minute.dt).toLocaleString(DateTime.TIME_SIMPLE)
+
+            report.push(`${time}.`)
+            report.push(`Precipitation volume: ${minute.precipitation} millimeters.`)
+        })
+
+        return report.join(" ")
+    }
+
     getDailyWeather({ daily }) {
         let report = []
 
@@ -116,21 +137,58 @@ module.exports = class Report {
         return report.join(" ")
     }
 
+    async getNotes({ daily, hourly, current }) {
+        let report = [""]
+
+        report.push("Here is weather commentary regarding the current weather.")
+
+        if (config.notes) {
+            const { data } = await axios.get(config.notes)
+            if (typeof data === "string")
+                report.push(data
+                    .replace(/\[low\]/g, daily[0].temp.min.toFixed(0))
+                    .replace(/\[high\]/g, daily[0].temp.max.toFixed(0))
+                    .replace(/\[clouds\]/g, current.clouds)
+                    .replace(/\[description\]/g, current.weather[0].description))
+        } else {
+            report.push("There are no notes regarding the weather.")
+        }
+
+        return report.join(" ")
+    }
+
     async getFullReport(stationName = "unknown") {
         const response = await weather.get("/onecall")
         const data = response.data
 
+        try {
+            const geoResponse = await weather.get('http://api.openweathermap.org/geo/1.0/reverse', {
+                params: {
+                    'apikey': key.key,
+                    'lat': config.lat,
+                    'lon': config.lon
+                }
+            })
+
+            this.city = geoResponse.data[0].name
+        } catch(err) {
+            console.log(err)
+        }
+
+
         const current = this.getCurrentWeather(data)
         const hourly = this.getHourlyWeather(data)
+        const minutely = this.getMinutelyWeather(data)
         const daily = this.getDailyWeather(data)
         const alerts = this.getAlerts(data)
+        const notes = await this.getNotes(data)
 
         const currentTime = DateTime.now()
 
-        const preface = `You are listening to station ${stationName}. This is a station broadcasting weather information on a loop.
+        const preface = `You are listening to station ${stationName}, serving the ${this.city} area. This is a station broadcasting weather information on a loop.
             This station is not affiliated with NOAA weather radio, a governmental broadcast featuring similar products. Thank you for listening to ${stationName}.
             The current time is ${currentTime.toLocaleString(DateTime.TIME_SIMPLE)} ${currentTime.offsetNameLong}.`
 
-        return preface.concat(current).concat(hourly).concat(daily).concat(alerts)
+        return preface.concat(current).concat(hourly).concat(minutely).concat(daily).concat(alerts).concat(notes)
     }
 }
