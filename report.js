@@ -189,8 +189,6 @@ module.exports = class Report {
             This station is not affiliated with NOAA weather radio, a governmental broadcast featuring similar products. Thank you for listening to ${stationName}.
             The current time is ${currentTime.toLocaleString(DateTime.TIME_SIMPLE)} ${currentTime.offsetNameLong}.`
 
-        console.log(preface.concat(current).concat(hourly).concat(minutely).concat(daily).concat(alerts).concat(notes))
-
         return preface.concat(current).concat(hourly).concat(minutely).concat(daily).concat(alerts).concat(notes)
     }
 }
