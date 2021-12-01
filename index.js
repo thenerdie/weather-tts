@@ -1,43 +1,92 @@
-const ffplay = require('ffplay')
-const chalk = require('chalk');
-const exportTTSWav = require('./exportTTSWav')
-const Report = require('./report');
+const axios = require("axios")
+const { execSync } = require("child_process")
 
-const args = process.argv.slice(2)
+const handlebars = require("handlebars")
 
-const weatherReport = new Report()
+const { format } = require("date-fns")
+const getDirection = require('degrees-to-direction');
+
+handlebars.registerHelper("round", number => {
+    return Math.floor(number + 0.5)
+})
+
+handlebars.registerHelper("windDirectionFromDegrees", degrees => {
+    const abbreviationToWindDirectionMap = {
+        "W": "west",
+        "E": "east",
+        "N": "north",
+        "S": "south",
+    }
+
+    const dirAbbreviation = getDirection(degrees)
+
+    let out = []
+
+    for (let i = 0; i < dirAbbreviation.length; i++) {
+        out.push(abbreviationToWindDirectionMap[dirAbbreviation.charAt(i)])
+    }
+
+    return out.join(" ")
+})
+
+handlebars.registerHelper("greaterThan", (a, b) => {
+    return a > b
+})
+
+handlebars.registerHelper("add", (a, b) => {
+    return a + b
+})
+
+handlebars.registerHelper("subtract", (a, b) => {
+    return a - b
+})
+
+handlebars.registerHelper("convertCelcius", celcius => {
+    return celcius * 9 / 5 + 32
+})
+
+handlebars.registerHelper("now", () => {
+    const now = Date.now()
+    return format(now, "h m a 'on' MMMM d yyyy")
+})
+
+const fs = require("fs")
+
+const config = require("./config.json")
+
+const templateString = fs.readFileSync("./reports/weather.hbs").toString()
+const template = handlebars.compile(templateString)
+
+let lastReport
+
+let attempts = 0
+
+setInterval(() => {
+    attempts = 0
+}, 60000)
 
 async function doReport() {
-    weatherReport.getFullReport(args[0]).then(async report => {
-        console.log(chalk.yellow("Generated weather report! Getting audio data..."))
+    try {
+        if (attempts > 5)
+            throw new Error("Too many failed attempts!")
 
-        exportTTSWav(report).then(fileName => {
-            console.log(chalk.green("Audio data written to wav file! Playing..."))
-
-            const player = new ffplay(`./${fileName}`)
-
-            player.proc.on('exit', () => {
-                doReport()
-            })
-        }).catch(err => {
-            console.log(chalk.red(err));
-            doReport()
+        const { data } = await axios.get(`https://swd.weatherflow.com/swd/rest/observations/station/${config.station_id}`, {
+            params: {
+                device_id: config.device_id,
+                token: config.token
+            }
         })
-    }).catch(() => {
-        console.log(chalk.red("Could not get report data!"))
-
-        const report = `Weather information is not available at this time.`
-
-        exportTTSWav(report).then(fileName => {
-            console.log(chalk.green("Audio data written to wav file! Playing..."))
-
-            const player = new ffplay(`./${fileName}`)
-
-            player.proc.on('exit', () => {
-                doReport()
-            })
-        })
-    })
+        
+        const report = template(data)
+        
+        execSync(`echo \"${report}\" | festival --tts`)
+        
+        lastReport = report
+    } catch(error) {
+        attempts += 1
+        console.log(error)
+        execSync(`echo \"${lastReport}\" | festival --tts`)
+    }
 }
 
 doReport()
