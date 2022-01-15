@@ -122,4 +122,4 @@ config.json
 *.wav
 weatherReport.txt
 
-report.mp3
+/*.mp3

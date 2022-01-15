@@ -1,10 +1,17 @@
 const axios = require("axios")
-const { execSync } = require("child_process")
+
+const { promisify } = require("util")
+
+let { exec } = require("child_process")
+
+exec = promisify(exec)
 
 const handlebars = require("handlebars")
 
 const { format } = require("date-fns")
 const getDirection = require('degrees-to-direction');
+
+const cron = require("node-cron")
 
 function parseTimestamp(time) {
     return new Date(time * 1000)
@@ -76,17 +83,8 @@ const config = require("./config.json");
 const { setInterval } = require("timers/promises");
 const { off } = require("process");
 
-const templateStringNow = fs.readFileSync("./reports/weather.hbs").toString()
-const templateNow = handlebars.compile(templateStringNow)
-
-const templateStringForecast = fs.readFileSync("./reports/forecast.hbs").toString()
-const templateForecast = handlebars.compile(templateStringForecast)
-
-let lastReport
-
-let attempts = 0
-
-let forecast
+const templateNow = handlebars.compile(fs.readFileSync("./reports/weather.hbs").toString())
+const templateForecast = handlebars.compile(fs.readFileSync("./reports/forecast.hbs").toString())
 
 let coordinates
 
@@ -115,44 +113,34 @@ async function updateForecast() {
 
     const { daily } = data
 
-    forecast = daily
+    await exec(`flite \"${templateForecast({ forecast: daily })}\" forecast.mp3 -voice ./mycroft-voice.flitevox`)
 }
 
-setInterval(() => {
-    attempts = 0
-}, 60000)
+async function updateCurrent() {
+    const { data } = await axios.get(`https://swd.weatherflow.com/swd/rest/observations/station/${config.station_id}`, {
+        params: {
+            device_id: config.device_id,
+            token: config.token
+        }
+    })
 
-setInterval(updateForecast, 600000)
+    await exec(`flite \"${templateNow(data)}\" report.mp3 -voice ./mycroft-voice.flitevox`)
+}
 
 async function doReport() {
-    try {
-        if (attempts > 5)
-            throw new Error("Too many failed attempts!")
-
-        const { data } = await axios.get(`https://swd.weatherflow.com/swd/rest/observations/station/${config.station_id}`, {
-            params: {
-                device_id: config.device_id,
-                token: config.token
-            }
-        })
-        
-        const report = `${templateNow(data)} ${templateForecast({ forecast: forecast })}`
-        
-        execSync(`flite \"${report}\" report.mp3 && aplay report.mp3`)
-        
-        lastReport = report
-    } catch(error) {
-        attempts += 1
-        console.log(error)
-        execSync(`flite \"${lastReport}\" report.mp3 && aplay report.mp3`)
-    }
+    await exec(`aplay report.mp3`)
+    await exec(`aplay forecast.mp3`)
 
     doReport()
 }
 
 async function main() {
     await getCoordinates()
+    await updateCurrent()
     await updateForecast()
+
+    cron.schedule("*/2 * * * *", updateCurrent)
+    cron.schedule("*/10 * * * *", updateForecast)
 
     doReport()
 }
