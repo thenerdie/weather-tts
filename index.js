@@ -122,6 +122,8 @@ setInterval(() => {
     attempts = 0
 }, 60000)
 
+setInterval(updateForecast, 600000)
+
 async function doReport() {
     try {
         if (attempts > 5)
@@ -136,7 +138,9 @@ async function doReport() {
         
         const report = `${templateNow(data)} ${templateForecast({ forecast: forecast })}`
         
-        execSync(`flite \"${report}\" report.mp3 && aplay report.mp3`)
+        console.log(report)
+
+        // execSync(`flite \"${report}\" report.mp3 && aplay report.mp3`)
         
         lastReport = report
     } catch(error) {
@@ -144,6 +148,8 @@ async function doReport() {
         console.log(error)
         execSync(`flite \"${lastReport}\" report.mp3 && aplay report.mp3`)
     }
+
+    doReport()
 }
 
 async function main() {

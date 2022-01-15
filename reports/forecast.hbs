@@ -1,7 +1,10 @@
 {{#each forecast}}
+
     {{weekday this.dt}}. Sunrise {{time this.sunrise}}. {{this.weather.0.description}}. High temperature {{round this.temp.max}} degrees.
     {{#if (greaterThan this.pop 0.1)}}
     Chance of rain {{multiply this.pop 100}} percent.
     {{/if}}
-    {{windDirectionFromDegrees this.wind_deg}} wind at {{round this.wind_speed}} miles per hour.
+    {{windDirectionFromDegrees this.wind_deg}} wind at {{round this.wind_speed}} miles per hour{{#if (greaterThan this.wind_gust 10)}}, gusting to {{round this.wind_gust}} miles per hour{{/if}}.
+
+    {{weekday this.dt}} night. Sunset {{time this.sunset}}. Low temperature {{round this.temp.min}} degrees.
 {{/each}}
