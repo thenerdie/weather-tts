@@ -135,16 +135,14 @@ async function doReport() {
         })
         
         const report = `${templateNow(data)} ${templateForecast({ forecast: forecast })}`
-
-        console.log(report)
         
-        // execSync(`echo \"${report}\" | festival --tts`)
+        execSync(`flite \"${report}\" report.mp3 && aplay report.mp3`)
         
         lastReport = report
     } catch(error) {
         attempts += 1
         console.log(error)
-        execSync(`echo \"${lastReport}\" | festival --tts`)
+        execSync(`flite \"${lastReport}\" report.mp3 && aplay report.mp3`)
     }
 }
 
