@@ -2,13 +2,7 @@ Here are the latest observations for station {{station_name}}.
 
 Temperature {{round (convertCelcius obs.0.air_temperature)}}, relative humidity {{obs.0.relative_humidity}} percent.
 
-Winds {{windDirectionFromDegrees obs.0.wind_direction}} at {{obs.0.wind_avg}} miles per hour,
-
-{{#if (greaterThan (subtract obs.0.wind_gust obs.0.wind_avg) 8)}}
-    gusting to {{round obs.0.wind_gust}} miles per hour.
-{{else}}
-    .
-{{/if}}
+Winds {{windDirectionFromDegrees obs.0.wind_direction}} at {{obs.0.wind_avg}} miles per hour{{#if (greaterThan (subtract obs.0.wind_gust obs.0.wind_avg) 8)}}, gusting to {{round obs.0.wind_gust}} miles per hour.{{else}}.{{/if}}
 
 {{#if obs.0.uv}}
     UV index {{obs.0.uv}}.

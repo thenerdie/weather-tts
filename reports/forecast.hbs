@@ -1,0 +1,7 @@
+{{#each forecast}}
+    {{weekday this.dt}}. Sunrise {{time this.sunrise}}. {{this.weather.0.description}}. High temperature {{round this.temp.max}} degrees.
+    {{#if (greaterThan this.pop 0.1)}}
+    Chance of rain {{multiply this.pop 100}} percent.
+    {{/if}}
+    {{windDirectionFromDegrees this.wind_deg}} wind at {{round this.wind_speed}} miles per hour.
+{{/each}}
